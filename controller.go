@@ -10,6 +10,20 @@ import (
 	"github.com/gorilla/mux"
 )
 
+const (
+	dbName     = "rinha"
+	dbPort     = 5432
+	dbUser     = "dridev"
+	dbPassword = "130722"
+)
+
+var dbConfig = DbConfig{
+	Name:     dbName,
+	Port:     dbPort,
+	User:     dbUser,
+	Password: dbPassword,
+}
+
 func transacaoController(w http.ResponseWriter, r *http.Request) {
 	var transcaoDTO TransacaoDTO
 
@@ -22,13 +36,6 @@ func transacaoController(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
-	}
-
-	dbConfig := DbConfig{
-		Name:     "rinha_back_end",
-		Port:     5432,
-		User:     "dridev",
-		Password: "130722",
 	}
 
 	db, err := startConnection(dbConfig)
@@ -54,7 +61,7 @@ func transacaoController(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
-	saveTrasactionService(id, transcaoDTO, db)
+	saveTransaction(id, db, transcaoDTO)
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(respostaDTO)
 	defer db.Close()
@@ -74,20 +81,18 @@ func extratosController(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	dbConfig := DbConfig{
-		Name:     "rinha_back_end",
-		Port:     5432,
-		User:     "dridev",
-		Password: "130722",
-	}
-
 	db, err := startConnection(dbConfig)
 	if err != nil {
 		http.Error(w, "Erro ao conectar ao banco de dados", http.StatusInternalServerError)
 		return
 	}
 
-	res, _ := getExtratoByClienteId(id, db)
+	res, err := getExtratoByClienteId(id, db)
+
+	if err != nil {
+		http.Error(w, "Cliente não encontrado", http.StatusNotFound)
+		return
+	}
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(res)
 	defer db.Close()

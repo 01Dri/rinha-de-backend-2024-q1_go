@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"time"
 
@@ -13,7 +14,6 @@ type DbConfig struct {
 	Port     int
 	User     string
 	Password string
-	Url      string
 }
 
 func startConnection(config DbConfig) (*sql.DB, error) {
@@ -59,6 +59,15 @@ func getClientById(id int, conn *sql.DB) (Cliente, error) {
 	return cliente, fmt.Errorf("Cliente com ID %d não encontrado", id)
 }
 
+func saveCliente(cliente Cliente, conn *sql.DB) (bool, error) {
+	_, err := conn.Query("UPDATE clientes SET saldo_inicial = $1 WHERE id = $2", cliente.SaldoInicial, cliente.Id)
+	if err != nil {
+		return false, errors.New(err.Error())
+	}
+	return true, nil
+
+}
+
 func saveTransaction(id int, conn *sql.DB, transacaoDTO TransacaoDTO) (bool, error) {
 	_, err := conn.Query("INSERT INTO transacoes (client_id, valor, tipo, descricao, realizada_em) VALUES ($1, $2, $3, $4, $5)",
 		id,
@@ -78,6 +87,11 @@ func getExtratoByClienteId(id int, conn *sql.DB) (ExtratoFinalRespostaDTO, error
 	if err != nil {
 		return ExtratoFinalRespostaDTO{}, err
 	}
+
+	if id > 5 {
+		return ExtratoFinalRespostaDTO{}, errors.New("Cliente não encontrado")
+	}
+
 	res := ExtratoFinalRespostaDTO{
 		UltimasTransacoes: make([]ExtratoRespostaDTO, 0, 10),
 	}
@@ -85,7 +99,7 @@ func getExtratoByClienteId(id int, conn *sql.DB) (ExtratoFinalRespostaDTO, error
 	for rows.Next() {
 		var carteira CarteiraRespostaDTO
 		var transacao ExtratoRespostaDTO
-		err = rows.Scan(&carteira.Limite, &carteira.Saldo, &transacao.Saldo, &transacao.Descricao, &transacao.Tipo, &transacao.RealizadaEm)
+		err = rows.Scan(&carteira.Limite, &carteira.Saldo, &transacao.Valor, &transacao.Descricao, &transacao.Tipo, &transacao.RealizadaEm)
 		if err != nil {
 			if carteira.Limite != 0 {
 				res.Saldo.Saldo = carteira.Saldo

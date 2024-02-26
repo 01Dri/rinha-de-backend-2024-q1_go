@@ -1,4 +1,4 @@
-CREATE DATABASE rinha_back_end;
+CREATE DATABASE rinha;
 
 \c rinha_back_end;
 
@@ -24,8 +24,3 @@ INSERT INTO clientes (limite, saldo_inicial) VALUES
     (1000000, 0),
     (10000000, 0),
     (500000, 0);
-
--- Inserir dados na tabela transacoes
-INSERT INTO transacoes (cliente_id, valor, tipo, descricao, realizada_em) VALUES
-    (1, 10, 'c', 'descricao', '2024-01-17T02:34:38.543030Z'),
-    (1, 90000, 'd', 'descricao', '2024-01-17T02:34:38.543030Z'); id |  limite  | saldo_inicial 

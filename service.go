@@ -31,7 +31,7 @@ type CarteiraRespostaDTO struct {
 }
 
 type ExtratoRespostaDTO struct {
-	Saldo       int
+	Valor       int
 	Tipo        string
 	Descricao   string
 	RealizadaEm time.Time
@@ -59,9 +59,6 @@ func transacao(id int, transacao TransacaoDTO, conn *sql.DB) (TransacaoRespostaD
 	respostaDTO.Limite = cliente.Limite
 	respostaDTO.Saldo = cliente.SaldoInicial
 
+	saveCliente(cliente, conn)
 	return respostaDTO, nil
-}
-
-func saveTrasactionService(id int, transacao TransacaoDTO, conn *sql.DB) {
-	saveTransaction(id, conn, transacao)
 }
