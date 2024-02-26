@@ -54,8 +54,42 @@ func transacaoController(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
-
+	saveTrasactionService(id, transcaoDTO, db)
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(respostaDTO)
 	defer db.Close()
+}
+
+func extratosController(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Método não permitido", http.StatusMethodNotAllowed)
+		return
+	}
+
+	vars := mux.Vars(r)
+	idStr := vars["id"]
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		http.Error(w, "ID inválido", http.StatusBadRequest)
+		return
+	}
+
+	dbConfig := DbConfig{
+		Name:     "rinha_back_end",
+		Port:     5432,
+		User:     "dridev",
+		Password: "130722",
+	}
+
+	db, err := startConnection(dbConfig)
+	if err != nil {
+		http.Error(w, "Erro ao conectar ao banco de dados", http.StatusInternalServerError)
+		return
+	}
+
+	res, _ := getExtratoByClienteId(id, db)
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(res)
+	defer db.Close()
+
 }

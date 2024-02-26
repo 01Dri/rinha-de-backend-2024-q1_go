@@ -14,7 +14,8 @@ CREATE TABLE transacoes (
     valor BIGINT,
     tipo CHAR(1),
     descricao TEXT,
-    realizada_em TIMESTAMP
+    realizada_em TIMESTAMP,
+    FOREIGN KEY (cliente_id) REFERENCES clientes(id)
 );
 
 INSERT INTO clientes (limite, saldo_inicial) VALUES

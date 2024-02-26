@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"time"
 )
 
 type Cliente struct {
@@ -21,6 +22,24 @@ type TransacaoDTO struct {
 type TransacaoRespostaDTO struct {
 	Limite int
 	Saldo  int
+}
+
+type CarteiraRespostaDTO struct {
+	Saldo       int
+	Limite      int
+	DataExtrato time.Time
+}
+
+type ExtratoRespostaDTO struct {
+	Saldo       int
+	Tipo        string
+	Descricao   string
+	RealizadaEm time.Time
+}
+
+type ExtratoFinalRespostaDTO struct {
+	Saldo             CarteiraRespostaDTO
+	UltimasTransacoes []ExtratoRespostaDTO
 }
 
 func transacao(id int, transacao TransacaoDTO, conn *sql.DB) (TransacaoRespostaDTO, error) {
@@ -41,4 +60,8 @@ func transacao(id int, transacao TransacaoDTO, conn *sql.DB) (TransacaoRespostaD
 	respostaDTO.Saldo = cliente.SaldoInicial
 
 	return respostaDTO, nil
+}
+
+func saveTrasactionService(id int, transacao TransacaoDTO, conn *sql.DB) {
+	saveTransaction(id, conn, transacao)
 }
