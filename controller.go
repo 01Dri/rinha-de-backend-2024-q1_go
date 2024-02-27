@@ -24,12 +24,6 @@ func TransacaoController(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	db, err := StartConnection("postgres://admin:admin@db:5432/rinha?sslmode=disable")
-	if err != nil {
-		http.Error(w, "Erro ao conectar ao banco de dados", http.StatusInternalServerError)
-		return
-	}
-
 	vars := mux.Vars(r)
 	idStr := vars["id"]
 	id, err := strconv.Atoi(idStr)
@@ -37,14 +31,17 @@ func TransacaoController(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "ID inválido", http.StatusBadRequest)
 		return
 	}
+	cliente, errC := GetClientById(id)
 
-	_, err = SaveTransaction(id, db, transcaoDTO)
+	if errC != nil {
+		http.Error(w, "Cliente não encontrado", http.StatusNotFound)
+		return
+	}
+
+	respostaDTO, err := SaveTransaction(id, transcaoDTO, cliente)
 
 	if err != nil {
-		if strings.Contains(err.Error(), "Cliente não encontrado") {
-			http.Error(w, "Cliente não encontrado", http.StatusNotFound)
-			return
-		}
+		fmt.Println("caiu aq")
 		if strings.Contains(err.Error(), "Valor da transação excede o limite") {
 			http.Error(w, err.Error(), http.StatusUnprocessableEntity)
 			return
@@ -52,29 +49,18 @@ func TransacaoController(w http.ResponseWriter, r *http.Request) {
 
 		if strings.Contains(err.Error(), "Tipo inválido") {
 			http.Error(w, err.Error(), http.StatusUnprocessableEntity)
+			return
 		}
 
 		if strings.Contains(err.Error(), "Descrição deve apenas conter entre 1 a 10 caracteres") {
 			http.Error(w, err.Error(), http.StatusUnprocessableEntity)
-		}
-		return
-	}
-
-	respostaDTO, err := Transacao(id, transcaoDTO, db)
-	if err != nil {
-		fmt.Println(err.Error())
-		if strings.Contains(err.Error(), "Cliente não encontrado") {
-			http.Error(w, "Cliente não encontrado", http.StatusNotFound)
 			return
-		} else {
-			http.Error(w, "O valor da transacao é maior do que o limite do cliente", http.StatusUnprocessableEntity)
 		}
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(respostaDTO)
-	defer db.Close()
 }
 
 func ExtratosController(w http.ResponseWriter, r *http.Request) {
@@ -90,22 +76,13 @@ func ExtratosController(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "ID inválido", http.StatusBadRequest)
 		return
 	}
-
-	db, err := StartConnection("postgres://admin:admin@db:5432/rinha?sslmode=disable")
-	if err != nil {
-		fmt.Println(err)
-		http.Error(w, "Erro ao conectar ao banco de dados", http.StatusInternalServerError)
-		return
-	}
-
-	res, err := GetExtratoByClienteId(id, db)
+	res, err := GetExtratoByClienteId(id)
 
 	if err != nil {
 		http.Error(w, "Cliente não encontrado", http.StatusNotFound)
 		return
 	}
+
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(res)
-	defer db.Close()
-
 }

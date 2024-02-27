@@ -8,10 +8,13 @@ import (
 )
 
 func main() {
-
-	fmt.Println("Ola mundo")
 	r := mux.NewRouter()
 
+	if err := CreateConnectionPool("postgres://admin:admin@db:5432/rinha?sslmode=disable"); err != nil {
+		fmt.Println("Erro ao criar o pool de conexões:", err)
+	}
+
+	defer db.Close()
 	r.HandleFunc("/clientes/{id}/transacoes", TransacaoController).Methods(http.MethodPost)
 	r.HandleFunc("/clientes/{id}/extrato", ExtratosController).Methods(http.MethodGet)
 

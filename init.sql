@@ -1,4 +1,3 @@
-
 CREATE TABLE clientes (
     id SERIAL PRIMARY KEY,
     limite BIGINT,

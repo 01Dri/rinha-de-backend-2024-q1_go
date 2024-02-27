@@ -12,8 +12,8 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '0.2'
-          memory: '20MB'
+          cpus: '0.66'
+          memory: '200MB'
     restart: always
 
   api02:
@@ -34,7 +34,7 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '0.2'
+          cpus: '0.17'
           memory: '20MB'
 
   db:
@@ -55,8 +55,8 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '0.9'
-          memory: '490MB'
+          cpus: '0.13'
+          memory: '140MB'
 
 networks:
   default:
