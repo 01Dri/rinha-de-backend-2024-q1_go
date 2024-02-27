@@ -9,17 +9,7 @@ import (
 	_ "github.com/lib/pq"
 )
 
-type DbConfig struct {
-	Name     string
-	Port     int
-	User     string
-	Password string
-}
-
-func startConnection(config DbConfig) (*sql.DB, error) {
-	connStr := fmt.Sprintf("user=%s password=%s dbname=%s port=%d sslmode=disable",
-		config.User, config.Password, config.Name, config.Port)
-
+func StartConnection(connStr string) (*sql.DB, error) {
 	db, err := sql.Open("postgres", connStr)
 	if err != nil {
 		return nil, err
@@ -33,7 +23,7 @@ func startConnection(config DbConfig) (*sql.DB, error) {
 	return db, nil
 }
 
-func getClientById(id int, conn *sql.DB) (Cliente, error) {
+func GetClientById(id int, conn *sql.DB) (Cliente, error) {
 	var cliente Cliente
 
 	rows, err := conn.Query("SELECT * FROM clientes WHERE id = $1", id)
@@ -59,7 +49,7 @@ func getClientById(id int, conn *sql.DB) (Cliente, error) {
 	return cliente, fmt.Errorf("Cliente com ID %d não encontrado", id)
 }
 
-func saveCliente(cliente Cliente, conn *sql.DB) (bool, error) {
+func SaveCliente(cliente Cliente, conn *sql.DB) (bool, error) {
 	_, err := conn.Query("UPDATE clientes SET saldo_inicial = $1 WHERE id = $2", cliente.SaldoInicial, cliente.Id)
 	if err != nil {
 		return false, errors.New(err.Error())
@@ -68,8 +58,28 @@ func saveCliente(cliente Cliente, conn *sql.DB) (bool, error) {
 
 }
 
-func saveTransaction(id int, conn *sql.DB, transacaoDTO TransacaoDTO) (bool, error) {
-	_, err := conn.Query("INSERT INTO transacoes (client_id, valor, tipo, descricao, realizada_em) VALUES ($1, $2, $3, $4, $5)",
+func SaveTransaction(id int, conn *sql.DB, transacaoDTO TransacaoDTO) (bool, error) {
+
+	cliente, errC := GetClientById(id, conn)
+
+	if errC != nil {
+		return false, errors.New("Cliente não encontrado")
+	}
+
+	if transacaoDTO.Tipo != "c" && transacaoDTO.Tipo != "d" {
+		return false, errors.New("Tipo inválido")
+	}
+
+	if len(transacaoDTO.Descricao) < 1 || len(transacaoDTO.Descricao) > 10 {
+		return false, errors.New("Descrição deve apenas conter entre 1 a 10 caracteres")
+	}
+
+	novoLimite := cliente.Limite - -cliente.SaldoInicial
+	if transacaoDTO.Valor > novoLimite {
+		return false, errors.New("Valor da transação excede o limite")
+	}
+
+	_, err := conn.Query("INSERT INTO transacoes (cliente_id, valor, tipo, descricao, realizada_em) VALUES ($1, $2, $3, $4, $5)",
 		id,
 		transacaoDTO.Valor,
 		transacaoDTO.Tipo,
@@ -82,8 +92,8 @@ func saveTransaction(id int, conn *sql.DB, transacaoDTO TransacaoDTO) (bool, err
 
 }
 
-func getExtratoByClienteId(id int, conn *sql.DB) (ExtratoFinalRespostaDTO, error) {
-	rows, err := conn.Query("SELECT limite, saldo_inicial, valor, descricao, tipo, realizada_em FROM clientes c LEFT JOIN transacoes t ON t.cliente_id = c.id WHERE c.id = $1	 ORDER BY t.id DESC LIMIT 10", id)
+func GetExtratoByClienteId(id int, conn *sql.DB) (ExtratoFinalRespostaDTO, error) {
+	rows, err := conn.Query("SELECT limite, saldo_inicial, valor, descricao, tipo, realizada_em FROM clientes c LEFT JOIN transacoes t ON t.cliente_id = c.id WHERE c.id = $1 ORDER BY t.id DESC LIMIT 10", id)
 	if err != nil {
 		return ExtratoFinalRespostaDTO{}, err
 	}

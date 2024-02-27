@@ -42,8 +42,8 @@ type ExtratoFinalRespostaDTO struct {
 	UltimasTransacoes []ExtratoRespostaDTO
 }
 
-func transacao(id int, transacao TransacaoDTO, conn *sql.DB) (TransacaoRespostaDTO, error) {
-	cliente, err := getClientById(id, conn)
+func Transacao(id int, transacao TransacaoDTO, conn *sql.DB) (TransacaoRespostaDTO, error) {
+	cliente, err := GetClientById(id, conn)
 	fmt.Println(cliente)
 	if err != nil {
 		return TransacaoRespostaDTO{}, errors.New("Cliente não encontrado")
@@ -59,6 +59,6 @@ func transacao(id int, transacao TransacaoDTO, conn *sql.DB) (TransacaoRespostaD
 	respostaDTO.Limite = cliente.Limite
 	respostaDTO.Saldo = cliente.SaldoInicial
 
-	saveCliente(cliente, conn)
+	SaveCliente(cliente, conn)
 	return respostaDTO, nil
 }

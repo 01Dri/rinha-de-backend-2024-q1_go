@@ -1,6 +1,3 @@
-CREATE DATABASE rinha;
-
-\c rinha_back_end;
 
 CREATE TABLE clientes (
     id SERIAL PRIMARY KEY,
